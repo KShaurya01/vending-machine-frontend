@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { setQuantity } from "../store/quantitySlice";
 
 const CartContext = createContext();
 
 export const CartProvider = ({ children }) => {
   const [cart, setCart] = useState([]);
   const quantities = useSelector((state) => state.quantity);
+  const dispatch = useDispatch();
 
   // Update cart quantities whenever Redux quantities change
   useEffect(() => {
@@ -24,7 +26,6 @@ export const CartProvider = ({ children }) => {
   };
 
   const addToCart = (item) => {
-    console.log("CartContext: Adding item to cart:", item);
     const quantity = quantities[item._id] || 1;
 
     if (!canAddToCart(item, quantity)) {
@@ -32,17 +33,28 @@ export const CartProvider = ({ children }) => {
     }
 
     setCart((prev) => {
-      console.log("CartContext: Previous cart state:", prev);
       const existing = prev.find((i) => i._id === item._id);
       if (existing) {
-        console.log("CartContext: Item exists, updating quantity");
         return prev.map((i) =>
           i._id === item._id ? { ...i, quantity: quantity } : i
         );
       }
-      console.log("CartContext: Adding new item to cart");
       return [...prev, { ...item, quantity }];
     });
+  };
+
+  const incrementQuantity = (itemId, maxQuantity) => {
+    const currentQuantity = quantities[itemId] || 1;
+    if (currentQuantity < maxQuantity) {
+      dispatch(setQuantity({ itemId, quantity: currentQuantity + 1 }));
+    }
+  };
+
+  const decrementQuantity = (itemId) => {
+    const currentQuantity = quantities[itemId] || 1;
+    if (currentQuantity > 1) {
+      dispatch(setQuantity({ itemId, quantity: currentQuantity - 1 }));
+    }
   };
 
   const updateCartItemQuantity = (itemId, newQuantity) => {
@@ -55,9 +67,16 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = (itemId) => {
     setCart((prev) => prev.filter((item) => item._id !== itemId));
+    dispatch(setQuantity({ itemId, quantity: 1 }));
   };
 
-  const clearCart = () => setCart([]);
+  const clearCart = () => {
+    setCart([]);
+    // Reset all quantities in Redux
+    Object.keys(quantities).forEach((itemId) => {
+      dispatch(setQuantity({ itemId, quantity: 1 }));
+    });
+  };
 
   // Calculate total items in cart
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
@@ -71,6 +90,8 @@ export const CartProvider = ({ children }) => {
         clearCart,
         canAddToCart,
         updateCartItemQuantity,
+        incrementQuantity,
+        decrementQuantity,
         cartCount,
       }}
     >

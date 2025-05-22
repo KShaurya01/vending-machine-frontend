@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Grid, Typography, CircularProgress } from "@mui/material";
+import { Grid, Typography, CircularProgress, Box } from "@mui/material";
 import axios from "axios";
 import ItemCard from "../components/ItemCard";
 import { useCart } from "../context/CartContext";
@@ -36,11 +36,17 @@ const InventoryList = () => {
       <Typography variant="h4" gutterBottom>
         Vending Machine
       </Typography>
-      <Grid container spacing={3}>
+      <Grid container spacing={2}>
         {items.map((item) => (
-          <Grid item xs={12} sm={6} md={4} key={item._id}>
+          <Box
+            sx={{
+              width: { xs: "47%", sm: "40%", md: "25%", lg: "20%" },
+              alignItems: "center",
+            }}
+            key={item._id}
+          >
             <ItemCard item={item} onAddToCart={addToCart} />
-          </Grid>
+          </Box>
         ))}
       </Grid>
     </>
